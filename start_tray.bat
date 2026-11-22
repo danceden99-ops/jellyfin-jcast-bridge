@@ -24,7 +24,7 @@ if not errorlevel 1 (
 if not defined PY_CMD (
     echo [ERROR] Python was not found in your PATH!
     echo         Please ensure Python 3.10+ is installed,
-    echo         or run JRiverCastBridge.exe from dist\.
+    echo         or run JCastBridge.exe from dist\.
     echo.
     pause
     popd

@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-# PyInstaller specification for JRiverCastBridge
+# PyInstaller specification for JCastBridge
 # Generates a single-file, windowless Windows System Tray executable (.exe)
 
 import os
@@ -70,7 +70,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='JRiverCastBridge',
+    name='JCastBridge',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

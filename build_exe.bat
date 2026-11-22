@@ -1,10 +1,10 @@
 @echo off
 setlocal enabledelayedexpansion
 pushd "%~dp0"
-title Build JRiverCastBridge Standalone Executable
+title Build JCastBridge Standalone Executable
 
 echo ================================================================
-echo   Building JRiverCastBridge.exe (PyInstaller Single-File Executable)
+echo   Building JCastBridge.exe (PyInstaller Single-File Executable)
 echo ================================================================
 echo.
 
@@ -44,7 +44,7 @@ if errorlevel 1 (
 
 echo.
 echo [2/3] Compiling standalone executable with PyInstaller...
-!PY_CMD! -m PyInstaller JRiverCastBridge.spec --clean --noconfirm
+!PY_CMD! -m PyInstaller JCastBridge.spec --clean --noconfirm
 if errorlevel 1 (
     echo.
     echo [ERROR] PyInstaller compilation failed! Check error messages above.
@@ -71,10 +71,10 @@ if exist "%~dp0certs\cast_bridge.crt" (
 echo.
 echo ================================================================
 echo   SUCCESS! Standalone executable generated at:
-echo   %~dp0dist\JRiverCastBridge.exe
+echo   %~dp0dist\JCastBridge.exe
 echo.
 echo   To deploy:
-echo   Copy "dist\JRiverCastBridge.exe" and "dist\config.yaml" to
+echo   Copy "dist\JCastBridge.exe" and "dist\config.yaml" to
 echo   ANY directory on your PC. No Python installation required!
 echo ================================================================
 echo.

@@ -17,7 +17,7 @@ ElseIf WshShell.Run("py.exe -c ""exit(0)""", 0, True) = 0 Then
     pyExe = "py.exe"
 Else
     MsgBox "Python was not found in PATH." & vbCrLf & _
-           "Please ensure Python 3.10+ is installed, or run JRiverCastBridge.exe from dist\.", _
+           "Please ensure Python 3.10+ is installed, or run JCastBridge.exe from dist\.", _
            vbCritical, "JRiver Cast Bridge Launcher Error"
     WScript.Quit 1
 End If

@@ -10,6 +10,8 @@ Available both as a **standalone, zero-dependency Windows executable (`.exe`)** 
 
 ## Architecture Overview
 
+![Jellyfin Cast to JRiver Architecture Overview](architecture_overview.png)
+
 ```
                       ┌────────────────────────────────────────────────┐
                       │              Jellyfin Ecosystem                │
@@ -84,7 +86,7 @@ Available both as a **standalone, zero-dependency Windows executable (`.exe`)** 
 
 ## Windows System Tray Application
 
-The bridge includes a native Windows notification area (System Tray) runner (`run_tray.py` / `JRiverCastBridge.exe`):
+The bridge includes a native Windows notification area (System Tray) runner (`run_tray.py` / `JCastBridge.exe`):
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -127,7 +129,7 @@ The bridge includes a native Windows notification area (System Tray) runner (`ru
 You can compile the entire application into a single, standalone executable that requires **no Python installation**, no `.venv`, and no environment variables on target machines.
 
 ### 1. Compile the Executable
-> **Important**: If `JRiverCastBridge.exe` is currently running, right-click its System Tray icon and select **Exit** first so Windows does not lock the binary during compilation.
+> **Important**: If `JCastBridge.exe` is currently running, right-click its System Tray icon and select **Exit** first so Windows does not lock the binary during compilation.
 
 In the project directory, double-click or run:
 ```cmd
@@ -135,25 +137,25 @@ build_exe.bat
 ```
 This script will:
 - Check for PyInstaller (auto-installing via `pip` if needed).
-- Compile `run_tray.py` using `JRiverCastBridge.spec` with full C-extension bundling (`cryptography`, `pystray`, `zeroconf`, `aiohttp`) into a single windowless binary.
+- Compile `run_tray.py` using `JCastBridge.spec` with full C-extension bundling (`cryptography`, `pystray`, `zeroconf`, `aiohttp`) into a single windowless binary.
 - Automatically clean previous builds (`--clean --noconfirm`).
-- Output the executable to `dist\JRiverCastBridge.exe`, copy `config.yaml`, and stage the TLS certificates in `dist\certs\`.
+- Output the executable to `dist\JCastBridge.exe`, copy `config.yaml`, and stage the TLS certificates in `dist\certs\`.
 
 ### 2. Standalone Deployment
-Copy the compiled `dist\` folder to any location on your Media Player PC (e.g. `C:\Tools\JRiverCastBridge\` or `D:\Apps\JRiverCastBridge\`):
+Copy the compiled `dist\` folder to any location on your Media Player PC (e.g. `C:\Tools\JCastBridge\` or `D:\Apps\JCastBridge\`):
 ```
-C:\Tools\JRiverCastBridge\
-├── JRiverCastBridge.exe     (Standalone ~24MB windowless binary)
+C:\Tools\JCastBridge\
+├── JCastBridge.exe          (Standalone ~24MB windowless binary)
 ├── config.yaml              (Application configuration)
 └── certs/                   (TLS certificates for Cast V2)
     ├── cast_bridge.crt
     └── cast_bridge.key
 ```
 
-- **Freeze-Aware Paths**: When running as an `.exe`, all paths (`config.yaml`, `bridge.log`, and `certs/`) resolve automatically to the directory where `JRiverCastBridge.exe` is located.
-- **Embedded Cryptography Engine**: The executable includes compiled native cryptography support. If the `certs/` folder is ever removed, `JRiverCastBridge.exe` will generate fresh 10-year self-signed certificates on-the-fly without needing external OpenSSL binaries.
-- **Auto-Config Generation**: If `JRiverCastBridge.exe` is run in an empty folder without `config.yaml`, it automatically creates a fully commented starter `config.yaml` template.
-- **Auto-Start with Windows**: Create a shortcut to `JRiverCastBridge.exe`, press `Win + R`, type `shell:startup`, and paste the shortcut into your Windows Startup folder.
+- **Freeze-Aware Paths**: When running as an `.exe`, all paths (`config.yaml`, `bridge.log`, and `certs/`) resolve automatically to the directory where `JCastBridge.exe` is located.
+- **Embedded Cryptography Engine**: The executable includes compiled native cryptography support. If the `certs/` folder is ever removed, `JCastBridge.exe` will generate fresh 10-year self-signed certificates on-the-fly without needing external OpenSSL binaries.
+- **Auto-Config Generation**: If `JCastBridge.exe` is run in an empty folder without `config.yaml`, it automatically creates a fully commented starter `config.yaml` template.
+- **Auto-Start with Windows**: Create a shortcut to `JCastBridge.exe`, press `Win + R`, type `shell:startup`, and paste the shortcut into your Windows Startup folder.
 
 ---
 
@@ -228,7 +230,7 @@ log_level: "INFO"   # DEBUG for detailed protocol trace, INFO for normal operati
 ## How to Run
 
 ### Option A: Standalone Executable (Recommended)
-Double-click `JRiverCastBridge.exe`. It runs silently in your Windows System Tray.
+Double-click `JCastBridge.exe`. It runs silently in your Windows System Tray.
 
 ### Option B: Python Launchers
 - **Silent Background Launch**:
@@ -296,11 +298,12 @@ When a compatible third-party app casts to "JRiver Media Center", the bridge rec
 
 ```
 jellyfin-jriver-bridge/
+├── architecture_overview.png      # End-to-end system architecture & protocol flow diagram
 ├── config.example.yaml            # Template configuration (copy to config.yaml)
 ├── config.yaml                    # Local application settings (ignored by git)
 ├── requirements.txt               # Python package dependencies
 ├── build_exe.bat                  # One-click PyInstaller compiler to standalone .exe
-├── JRiverCastBridge.spec          # PyInstaller build specification
+├── JCastBridge.spec               # PyInstaller build specification
 ├── run.py                         # Console / CLI launcher
 ├── run_tray.py                    # Windows System Tray GUI application
 ├── start_tray.bat                 # Visible console launcher (shows output & pauses on error)
@@ -311,7 +314,7 @@ jellyfin-jriver-bridge/
 │   ├── cast_bridge.crt
 │   └── cast_bridge.key
 ├── dist/                          # Output directory for compiled standalone .exe
-│   ├── JRiverCastBridge.exe
+│   ├── JCastBridge.exe
 │   ├── config.yaml
 │   └── certs/
 │       ├── cast_bridge.crt
