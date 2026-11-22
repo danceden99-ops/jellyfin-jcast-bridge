@@ -55,16 +55,16 @@ if errorlevel 1 (
 
 echo.
 echo [3/3] Preparing release folder (dist\)...
-if exist "config.yaml" (
-    copy /Y "config.yaml" "dist\config.yaml" >nul
+if exist "%~dp0config.yaml" (
+    copy /Y "%~dp0config.yaml" "%~dp0dist\config.yaml" >nul
     echo       Copied config.yaml into dist\
-) else if exist "config.example.yaml" (
-    copy /Y "config.example.yaml" "dist\config.yaml" >nul
+) else if exist "%~dp0config.example.yaml" (
+    copy /Y "%~dp0config.example.yaml" "%~dp0dist\config.yaml" >nul
     echo       Copied config.example.yaml as dist\config.yaml
 )
-if not exist "dist\certs" mkdir "dist\certs"
-if exist "certs\cast_bridge.crt" (
-    copy /Y "certs\*" "dist\certs\" >nul
+if not exist "%~dp0dist\certs" mkdir "%~dp0dist\certs"
+if exist "%~dp0certs\cast_bridge.crt" (
+    copy /Y "%~dp0certs\*.*" "%~dp0dist\certs\" >nul
     echo       Copied existing certs into dist\certs\
 )
 

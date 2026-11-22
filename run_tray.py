@@ -36,6 +36,18 @@ from typing import Optional
 # Suppress noisy unraisable transport teardown warnings during interpreter shutdown
 sys.unraisablehook = lambda unraisable: None
 
+# In PyInstaller frozen bundle on Windows, ensure _MEIPASS and subdirectories are in DLL search path
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    for dll_dir in [
+        sys._MEIPASS,
+        os.path.join(sys._MEIPASS, "cryptography", "hazmat", "bindings"),
+    ]:
+        if os.path.isdir(dll_dir):
+            try:
+                os.add_dll_directory(dll_dir)
+            except Exception:
+                pass
+
 from PIL import Image, ImageDraw
 import pystray
 from pystray import MenuItem as item
