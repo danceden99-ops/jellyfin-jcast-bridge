@@ -1,0 +1,44 @@
+# Jellyfin Cast → JRiver Media Center Bridge
+# Configuration File Template
+# Copy this file to config.yaml and edit to match your network setup.
+
+# ─── JRiver Media Center settings ────────────────────────────────────────────
+jriver:
+  host: "192.168.1.100"        # IP address of the machine running JRiver MC
+  port: 52199                  # MCWS port (default 52199, HTTPS default 52200)
+  username: null               # MCWS username (null = no authentication)
+  password: null               # MCWS password
+  zone: null                   # JRiver playback zone name or ID (null = active zone)
+  use_ssl: false               # true to use HTTPS for MCWS
+
+# ─── Cast receiver settings ──────────────────────────────────────────────────
+cast:
+  device_name: "JRiver Media Center"   # Name shown in Cast / Play On menus
+  port: 8009                           # Cast protocol port (standard 8009)
+  eureka_port: 8008                    # Eureka device info HTTP port (standard 8008)
+  cert_file: "certs/cast_bridge.crt"   # TLS certificate (auto-generated if missing)
+  key_file: "certs/cast_bridge.key"    # TLS private key  (auto-generated if missing)
+  device_id: null                      # Unique device ID (auto-generated if null)
+  bind_address: null                   # IP to bind to (null = auto-detect LAN IP)
+  status_interval: 1.0                 # Seconds between status broadcasts
+
+# ─── Jellyfin Server settings ────────────────────────────────────────────────
+# Connects directly to your Jellyfin server as an active player session.
+# "JRiver Media Center" will instantly show up in the Jellyfin "Cast / Play On"
+# menu across all clients (Web, iOS, Android, TV).
+jellyfin:
+  url: "http://192.168.1.50:8096"      # URL of your Jellyfin server
+  username: "your_jellyfin_username"   # Jellyfin username
+  password: "your_jellyfin_password"   # Jellyfin password
+  api_key: null                        # Optional: API key from Dashboard -> API Keys
+  device_name: "JRiver Media Center"
+
+# ─── URL rewrite rules ───────────────────────────────────────────────────────
+# Optional search->replace rules for media stream URLs.
+# Useful if JRiver is on a different subnet or cannot resolve Jellyfin's hostname.
+url_rewrite:
+  # "http://localhost:8096": "http://192.168.1.50:8096"
+  # "http://127.0.0.1:8096": "http://192.168.1.50:8096"
+
+# ─── Logging ─────────────────────────────────────────────────────────────────
+log_level: "INFO"   # DEBUG for protocol tracing, INFO for normal use
