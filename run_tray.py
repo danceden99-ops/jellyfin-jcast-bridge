@@ -224,6 +224,11 @@ class TrayApp:
             "  username: \"your_jellyfin_username\"\n"
             "  password: \"your_jellyfin_password\"\n"
             "  device_name: \"JRiver Media Center\"\n\n"
+            "outward_cast:\n"
+            "  enabled: false\n"
+            "  upnp_port: 8010\n"
+            "  zone_name_format: \"{name} [Cast]\"\n"
+            "  include_speaker_groups: true\n\n"
             "log_level: \"INFO\"\n"
         )
         try:

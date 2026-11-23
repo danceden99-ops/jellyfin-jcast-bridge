@@ -1,14 +1,16 @@
-# Jellyfin Cast → JRiver Media Center Bridge
+# JCastBridge: Jellyfin & JRiver Media Center Bidirectional Cast Bridge
 
-A high-performance Windows system tray service and Cast bridge that makes **JRiver Media Center** appear as an active remote playback target and Cast receiver for **Jellyfin**. 
+A high-performance Windows system tray service and bidirectional Cast bridge connecting **JRiver Media Center**, **Jellyfin**, and **Google Chromecast** hardware:
+- **Inward Casting (Jellyfin / Cast Senders → JRiver)**: Makes JRiver Media Center appear as an active remote playback target and Google Cast V2 receiver with full remote control (Play, Pause, Seek, Volume, Stop), zone pinning, automatic fullscreen display exit, and timeline synchronization.
+- **Outward Casting (JRiver → Chromecast Audio / Google Nest / Speaker Groups)**: Discovers LAN Cast devices and Google Home Speaker Groups via mDNS and exposes each as a native UPnP/DLNA playback zone inside JRiver Media Center (`Playing Now → Zones`), enabling whole-home audio streaming directly from JRiver without heavy third-party servers.
 
-Cast video and audio from any Jellyfin client (Web, Desktop, iOS, Android, Smart TV) directly to JRiver Media Center with full remote control (Play, Pause, Seek, Volume, Stop), zone pinning, automatic fullscreen display exit, and timeline synchronization.
-
-Available both as a **standalone, zero-dependency Windows executable (`.exe`)** and as a **Python service**.
+Available both as a **standalone, zero-dependency Windows executable (`JCastBridge.exe`)** and as a **Python service**.
 
 ---
 
 ## Architecture Overview
+
+### Inward Casting Architecture (Jellyfin / Cast Senders → JRiver)
 
 ![Jellyfin Cast to JRiver Architecture Overview](architecture_overview.png)
 
@@ -65,6 +67,47 @@ Available both as a **standalone, zero-dependency Windows executable (`.exe`)** 
                       └───────────────────────────────────────┘
 ```
 
+### Outward Casting Architecture (JRiver → Chromecast Audio & Speakers)
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                          JRiver Media Center                           │
+│   • Playing Now → Zones (e.g. "Living Room [Cast]", "Whole House")     │
+│   • Internal DLNA / HTTP Audio Server (Port 52199)                     │
+└───────────┬────────────────────────────────────────────────┬───────────┘
+            │ UPnP AVTransport / RenderingCtl                │ HTTP Audio Stream
+            │ SOAP Actions (Port 8010)                       │ (FLAC / WAV / MP3)
+            ▼                                                │
+┌─────────────────────────────────────────────────────────┐  │
+│                JCastBridge (Outward Cast)               │  │
+│  ┌───────────────────────────────────────────────────┐  │  │
+│  │ SSDP Server (UDP 1900)                            │  │  │
+│  │ • Responds to JRiver M-SEARCH discovery queries   │  │  │
+│  │ • Broadcasts ssdp:alive / byebye notifications    │  │  │
+│  └───────────────────────────────────────────────────┘  │  │
+│  ┌───────────────────────────────────────────────────┐  │  │
+│  │ Virtual UPnP Service (Port 8010)                  │  │  │
+│  │ • Serves description.xml & SCPD XML descriptors   │  │  │
+│  │ • Translates SetAVTransportURI, Play, Pause, Stop │  │  │
+│  │   Seek, and SetVolume SOAP calls into Cast events │  │  │
+│  └─────────────────────────┬─────────────────────────┘  │  │
+│                            │                            │  │
+│  ┌─────────────────────────▼─────────────────────────┐  │  │
+│  │ Cast V2 Outward Client Engine                     │  │  │
+│  │ • Launches Default Media Receiver (CC1AD845)      │  │  │
+│  │ • Dispatches LOAD, PLAY, PAUSE, SEEK, VOLUME      │  │  │
+│  │ • Maintains TLS Keep-Alives & Heartbeats          │  │  │
+│  └─────────────────────────┬─────────────────────────┘  │  │
+└────────────────────────────┼────────────────────────────┘  │
+                             │ Cast V2 TLS (Port 8009)       │
+                             ▼                               │
+┌─────────────────────────────────────────────────────────┐  │
+│         Google Chromecast Audio / Nest Speakers /       │  │
+│                 Google Speaker Groups                   │◄─┘
+│   Pulls, decodes, and outputs synchronized audio stream │
+└─────────────────────────────────────────────────────────┘
+```
+
 ### Core Architecture & Key Features
 1. **Direct Jellyfin Remote Player Session**:
    - Authenticates directly against your Jellyfin Server API (`/Users/AuthenticateByName` or API key).
@@ -81,6 +124,11 @@ Available both as a **standalone, zero-dependency Windows executable (`.exe`)** 
    - Advertises via mDNS Zeroconf (`_googlecast._tcp`).
    - Serves Cast V2 protocol buffers over TLS on port 8009 and Eureka device metadata on port 8008.
    - Emulates Chromecast device handshakes for browser and mobile Cast senders.
+4. **Bidirectional Outward Casting (JRiver → Chromecast Audio & Speakers)**:
+   - Discovers LAN Chromecast devices, Google Nest speakers, and multi-room Speaker Groups via mDNS.
+   - Exposes each device as a virtual UPnP/DLNA MediaRenderer zone directly inside JRiver (`Playing Now → Zones`).
+   - Listens on SSDP (UDP 1900) and serves lightweight UPnP endpoints (Port 8010) to translate JRiver playback verbs (`SetAVTransportURI`, `Play`, `Pause`, `Seek`, `Stop`, `SetVolume`) into Google Cast V2 commands.
+   - Eliminates the need for heavy, closed-source Java background servers (like BubbleUPnP Server).
 
 ---
 
@@ -221,6 +269,20 @@ jellyfin:
 url_rewrite:
   # "http://localhost:8096": "http://192.168.xxx.xxx:8096"
 
+# ─── Outward Casting settings (JRiver → Chromecast Audio / Speakers) ─────────
+# Enables bidirectional casting: discovers LAN Chromecasts and exposes each
+# device as a native UPnP/DLNA playback zone inside JRiver Media Center.
+outward_cast:
+  enabled: false                       # Set to true to enable JRiver -> Cast streaming
+  upnp_port: 8010                      # Local HTTP port for virtual UPnP renderers
+  zone_name_format: "{name} [Cast]"    # Naming template for JRiver's Zone list
+  include_speaker_groups: true         # Expose Google Cast Speaker Groups as zones
+  # include_devices:                   # Whitelist: only expose these specific devices
+  #   - "Living Room Speaker"
+  #   - "Whole House Audio"
+  # exclude_devices:                   # Blacklist: ignore these specific devices
+  #   - "Basement TV"
+
 # ─── Logging ─────────────────────────────────────────────────────────────────
 log_level: "INFO"   # DEBUG for detailed protocol trace, INFO for normal operation
 ```
@@ -260,6 +322,49 @@ python run.py -v
 4. Play any video or audio title.
 5. JRiver will begin playing the media with full Play, Pause, Unpause, and Seek synchronization on your Jellyfin client.
 6. When playback finishes or you press Stop on JRiver, the session releases automatically, allowing another video to be cast immediately.
+
+---
+
+## How to Cast from JRiver Media Center to Chromecast (Outward Casting)
+
+With **Outward Casting**, JRiver Media Center can stream directly to any Google Cast device, Google Nest smart speaker, or multi-room Google Home Speaker Group on your local network.
+
+### 1. Enable Outward Casting in `config.yaml`
+Set `outward_cast.enabled: true` in your `config.yaml`:
+```yaml
+outward_cast:
+  enabled: true                        # Set to true to activate outward casting
+  upnp_port: 8010                      # Local HTTP port for virtual UPnP renderers
+  zone_name_format: "{name} [Cast]"    # Naming template for JRiver's Zone list
+  include_speaker_groups: true         # Expose Google Cast Speaker Groups as zones
+```
+
+### 2. Enable JRiver Media Network (DLNA Server)
+JRiver needs its built-in DLNA/HTTP server active so Chromecast devices can stream the audio:
+1. In JRiver Media Center, open **Tools → Options → Media Network**.
+2. Check **Use Media Network to share this library and enable DLNA**.
+3. Under **Advanced**, ensure **DLNA Server** is checked.
+
+### 3. Select the Cast Zone in JRiver
+1. Start or restart `JCastBridge.exe` (or `python run_tray.py`).
+2. JCastBridge scans your network via mDNS Zeroconf, discovers all Chromecast receivers, and advertises them via SSDP.
+3. In JRiver Media Center, navigate to **Playing Now → Zones** (or look under **Drives & Devices → UPnP / DLNA Servers**).
+4. You will see your Cast devices listed with the suffix configured in `zone_name_format` (e.g. `Living Room Speaker [Cast]`, `Whole House Audio [Cast]`).
+5. Select the zone and press Play on any audio album, track, or playlist.
+
+### 4. Playback Controls & Streaming
+- **Transport Controls**: Play, Pause, Unpause, Seek, and Stop commands from JRiver GUI, JRemote, or web interfaces map directly to the Chromecast Default Media Receiver (`CC1AD845`).
+- **Volume Synchronization**: Adjusting volume in JRiver automatically sets the hardware volume on the Chromecast or Google Nest speaker.
+- **Whole-Home Audio (Speaker Groups)**: Google Cast synchronized multi-room audio is fully supported. Select any defined Speaker Group zone in JRiver to play music simultaneously across multiple speakers with hardware-synchronized clocking.
+- **Device Whitelist / Blacklist Filtering**: Avoid cluttering JRiver's zone list with household smart TVs or displays by specifying `include_devices` or `exclude_devices` in `config.yaml`.
+
+#### Recommended JRiver DLNA Audio Settings for Chromecast
+For the best streaming experience to Chromecast Audio and Nest speakers:
+1. In JRiver, go to **Tools → Options → Media Network → Add or configure DLNA servers...**.
+2. Select your DLNA server profile and click **Audio**.
+3. Under **Mode**, choose:
+   - **Original / Never convert** (if streaming standard FLAC, MP3, AAC, or WAV up to 96kHz / 24-bit).
+   - **Specified output format: PCM 16-bit L16** or **FLAC** for uncompressed, bit-perfect casting of high-resolution files.
 
 ---
 
@@ -333,6 +438,12 @@ jellyfin-jriver-bridge/
     │   ├── connection.py          # Per-client TLS connection handler
     │   ├── namespaces.py          # Cast namespace message router
     │   └── protocol.py            # Cast V2 protobuf framer
+    ├── cast_outward/
+    │   ├── discovery.py           # mDNS browser for LAN Cast devices
+    │   ├── client.py              # Async Cast V2 client & Default Media Receiver runner
+    │   ├── ssdp.py                # SSDP UDP 1900 discovery responder & alive announcer
+    │   ├── upnp_renderer.py       # Virtual UPnP MediaRenderer XML & SOAP endpoints
+    │   └── manager.py             # Outward cast lifecycle & JRiver zone manager
     ├── jellyfin/
     │   └── client.py              # Jellyfin remote control client & WebSocket
     └── jriver/
@@ -348,10 +459,16 @@ jellyfin-jriver-bridge/
   - If JRiver is offline: verify JRiver Media Center is open and MCWS is enabled (**Tools → Options → Media Network**).
   - If Jellyfin is offline: verify your `url`, `username`, and `password` in `config.yaml`.
 - **Windows Firewall**:
-  - Ensure inbound TCP ports `8009` (Cast TLS) and `8008` (Eureka HTTP) are allowed:
+  - Ensure inbound TCP ports `8008` (Eureka HTTP), `8009` (Cast V2 Receiver TLS), and `8010` (Virtual UPnP Renderers), plus inbound UDP port `1900` (SSDP multicast discovery) are allowed:
     ```powershell
-    New-NetFirewallRule -DisplayName "JRiver Cast Bridge" -Direction Inbound -Protocol TCP -LocalPort 8009,8008 -Action Allow
+    New-NetFirewallRule -DisplayName "JCastBridge Inbound TCP" -Direction Inbound -Protocol TCP -LocalPort 8008,8009,8010 -Action Allow
+    New-NetFirewallRule -DisplayName "JCastBridge SSDP Discovery UDP" -Direction Inbound -Protocol UDP -LocalPort 1900 -Action Allow
     ```
+- **Outward Cast Zones Do Not Appear in JRiver**:
+  - Verify `outward_cast.enabled: true` in `config.yaml`.
+  - Ensure JRiver's Media Network is enabled under **Tools → Options → Media Network**.
+  - In JRiver, check **Drives & Devices → UPnP / DLNA Servers** or right-click **Playing Now → Zones** and check if UPnP/DLNA zones are hidden.
+  - Make sure your Windows Network Profile is set to **Private** so Windows does not block SSDP multicast on UDP 1900.
 - **Inspect Live Logs**:
   - Right-click the tray icon and select **View Live Logs**, or open `bridge.log` in the application folder.
 

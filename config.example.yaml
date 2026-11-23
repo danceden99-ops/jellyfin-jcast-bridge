@@ -40,5 +40,19 @@ url_rewrite:
   # "http://localhost:8096": "http://192.168.1.50:8096"
   # "http://127.0.0.1:8096": "http://192.168.1.50:8096"
 
+# ─── Outward Casting settings (JRiver → Chromecast Audio / Speakers) ─────────
+# Enables bidirectional casting: discovers LAN Chromecasts and exposes each
+# device as a native UPnP/DLNA playback zone inside JRiver Media Center.
+outward_cast:
+  enabled: false                       # Set to true to enable JRiver -> Cast streaming
+  upnp_port: 8010                      # Local HTTP port for virtual UPnP renderers
+  zone_name_format: "{name} [Cast]"    # Naming template for JRiver's Zone list
+  include_speaker_groups: true         # Expose Google Cast Speaker Groups as zones
+  # include_devices:                   # Whitelist: only expose these specific devices
+  #   - "Living Room Speaker"
+  #   - "Whole House Audio"
+  # exclude_devices:                   # Blacklist: ignore these specific devices
+  #   - "Basement TV"
+
 # ─── Logging ─────────────────────────────────────────────────────────────────
 log_level: "INFO"   # DEBUG for protocol tracing, INFO for normal use

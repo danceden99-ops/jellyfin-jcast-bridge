@@ -15,6 +15,7 @@ import os
 from typing import Callable, Optional
 
 from .bridge.controller import BridgeController
+from .cast_outward.manager import OutwardCastManager
 from .cast_receiver.discovery import CastDiscovery
 from .cast_receiver.eureka import EurekaServer
 from .cast_receiver.server import CastServer
@@ -38,6 +39,7 @@ class BridgeService:
         self.server: Optional[CastServer] = None
         self.eureka: Optional[EurekaServer] = None
         self.jellyfin_player: Optional[JellyfinRemotePlayer] = None
+        self.outward_manager: Optional[OutwardCastManager] = None
 
         self._running = False
         self._health_task: Optional[asyncio.Task] = None
@@ -142,6 +144,16 @@ class BridgeService:
             await self.jellyfin_player.start()
         await self.server.start()
 
+        # 5. Outward Cast manager (JRiver -> Chromecast)
+        outward_cfg = self.config.get("outward_cast", {})
+        if outward_cfg.get("enabled", False):
+            self.outward_manager = OutwardCastManager(
+                config=self.config,
+                aiozc=self.discovery.aiozc if self.discovery else None,
+                own_device_id=self.discovery.device_id if self.discovery else None,
+            )
+            await self.outward_manager.start()
+
         # Perform initial health check immediately on startup
         jr, jf = await self.check_health()
         status_msg = f"JRiver: {'OK' if jr else 'Offline'} | Jellyfin: {'OK' if jf else 'Offline'}"
@@ -169,6 +181,10 @@ class BridgeService:
         if self.jellyfin_player:
             await self.jellyfin_player.stop()
             self.jellyfin_player = None
+
+        if self.outward_manager:
+            await self.outward_manager.stop()
+            self.outward_manager = None
 
         if self.eureka:
             await self.eureka.stop()
