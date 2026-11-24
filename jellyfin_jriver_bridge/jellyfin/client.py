@@ -157,6 +157,10 @@ class JellyfinRemotePlayer:
             logger.error("Error connecting to Jellyfin at %s: %s", self.server_url, e)
             return False
 
+    def is_connected(self) -> bool:
+        """Check if the Jellyfin client is actively connected via WebSocket with valid token."""
+        return bool(self._running and self._ws is not None and not self._ws.closed and self.token)
+
     async def report_capabilities(self) -> bool:
         """Tell Jellyfin this device supports playback remote control."""
         session = await self._get_session()
@@ -178,8 +182,15 @@ class JellyfinRemotePlayer:
             try:
                 async with session.post(url, json=capabilities, headers=self._headers()) as resp:
                     if resp.status in (200, 204):
-                        logger.info("Registered '%s' in Jellyfin Remote Control targets via /%s ✓", self.device_name, path)
+                        logger.debug("Registered '%s' in Jellyfin Remote Control targets via /%s ✓", self.device_name, path)
                         return True
+                    if resp.status in (401, 404):
+                        logger.warning("/%s returned HTTP %d — session may have expired, re-authenticating...", path, resp.status)
+                        if await self.authenticate():
+                            async with session.post(url, json=capabilities, headers=self._headers()) as retry_resp:
+                                if retry_resp.status in (200, 204):
+                                    logger.info("Re-registered '%s' in Jellyfin Remote Control targets after re-auth ✓", self.device_name)
+                                    return True
                     text = await resp.text()
                     logger.warning("/%s returned HTTP %d: %s", path, resp.status, text.strip()[:200])
             except Exception as e:
@@ -192,12 +203,18 @@ class JellyfinRemotePlayer:
 
     async def _ws_keepalive_loop(self, ws: aiohttp.ClientWebSocketResponse) -> None:
         """Periodically ping Jellyfin to keep the WebSocket and remote session alive."""
+        count = 0
         try:
             while self._running and not ws.closed:
                 await asyncio.sleep(25.0)
                 if not ws.closed:
                     await ws.send_str(json.dumps({"MessageType": "KeepAlive"}))
                     logger.debug("Sent periodic KeepAlive to Jellyfin WebSocket")
+                    count += 1
+                    # Every ~50s (2 iterations), refresh session capabilities via HTTP
+                    # so Jellyfin Server's SessionManager never prunes the session as idle
+                    if count % 2 == 0:
+                        await self.report_capabilities()
         except (asyncio.CancelledError, Exception):
             pass
 

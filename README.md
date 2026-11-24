@@ -454,6 +454,28 @@ jellyfin-jriver-bridge/
 
 ## Troubleshooting
 
+### JRiver Not Showing Up in Jellyfin Web Client (Tray Icon is Green)
+
+If the bridge icon is green (`JRiver: OK | Jellyfin: OK`) but "JRiver Media Center" does not appear in your Jellyfin client's **Cast / Play On** menu:
+
+1. **Jellyfin Multi-User Permissions (Most Common)**:
+   - Jellyfin strictly isolates playback sessions between user accounts by default.
+   - If the bridge is logged in under a dedicated background account (e.g. `username: "your_bridge_user"` in `config.yaml`) and you are logged into the Jellyfin Web Client under your personal account:
+     - Open Jellyfin **Dashboard → Users**.
+     - Click on the user account you are logged into in the web browser.
+     - Scroll down to the **Permissions** section and verify both settings are checked:
+       - **Enable playback remoting**
+       - **Allow remote control of other users**
+     - Click **Save**, then reload the web client.
+2. **Browser Page Cache (Hard Refresh)**:
+   - The Jellyfin web app (`jellyfin-web`) caches the list of active player targets. If the bridge was restarted or re-registered while the browser tab was already open, the list may not update immediately.
+   - Press **`Ctrl + F5`** (or `Shift + F5`) in your browser to force a hard page reload and re-fetch the active sessions table.
+3. **In-App Jellyfin Cast Button vs. Browser-Level Cast Menu**:
+   - Ensure you are clicking the **in-app Cast / Play On icon** located inside the Jellyfin web interface (in the top navigation bar or bottom player controls).
+   - **Do not** use Google Chrome's or Microsoft Edge's browser-level Cast menu (`⋮` → **Cast...** / **Save and share**). Chrome's native browser Cast searches for Google hardware attestation (`deviceauth`), which will reject non-Google devices. Jellyfin's in-app button communicates directly with the Jellyfin Server `/Sessions` API and bypasses Google hardware checks.
+
+### General Diagnostics & Connectivity
+
 - **Tray icon is Red**:
   - Right-click the tray icon to read the status tooltip.
   - If JRiver is offline: verify JRiver Media Center is open and MCWS is enabled (**Tools → Options → Media Network**).

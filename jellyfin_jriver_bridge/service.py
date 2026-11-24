@@ -218,8 +218,8 @@ class BridgeService:
             except Exception:
                 jriver_alive = False
 
-        if self.jellyfin_player and self.jellyfin_player.token:
-            jellyfin_alive = True
+        if self.jellyfin_player:
+            jellyfin_alive = self.jellyfin_player.is_connected()
         elif self.config.get("jellyfin", {}).get("url"):
             # Check basic reachability
             try:
