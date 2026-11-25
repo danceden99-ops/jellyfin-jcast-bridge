@@ -1,13 +1,13 @@
 @echo off
 rem ================================================================
-rem  Start Jellyfin -> JRiver Bridge Tray App (visible console)
+rem  Start JCastBridge Tray App (visible console)
 rem  Use this for troubleshooting — shows startup output and errors.
 rem ================================================================
 pushd "%~dp0"
-title Jellyfin to JRiver Bridge
+title JCastBridge
 
 echo ===================================================
-echo   Jellyfin to JRiver Media Center Bridge
+echo   JCastBridge (Jellyfin / JRiver / Cast Bridge)
 echo   Starting System Tray Application...
 echo ===================================================
 echo.

@@ -1,4 +1,4 @@
-' Silent launcher for Jellyfin -> JRiver Bridge Tray App (zero console window)
+' Silent launcher for JCastBridge Tray App (zero console window)
 Option Explicit
 
 Dim WshShell, fso, strPath, pyExe
@@ -18,7 +18,7 @@ ElseIf WshShell.Run("py.exe -c ""exit(0)""", 0, True) = 0 Then
 Else
     MsgBox "Python was not found in PATH." & vbCrLf & _
            "Please ensure Python 3.10+ is installed, or run JCastBridge.exe from dist\.", _
-           vbCritical, "JRiver Cast Bridge Launcher Error"
+           vbCritical, "JCastBridge Launcher Error"
     WScript.Quit 1
 End If
 

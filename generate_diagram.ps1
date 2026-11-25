@@ -304,7 +304,7 @@ $g.DrawLine($penStream, 2080, 520, 2080, 755)
 Draw-BadgeBox $g "DIRECT MEDIA STREAM (Bypasses Bridge!)" "HTTP / HTTPS / HLS / Direct UNC (Zero Bridge Bottleneck)" 1880 575 350 50 $roseAccent $brushRose $brushTitle
 
 # Save bitmap
-$outputPath = "Z:\jellyfin-jriver-bridge\architecture_overview.png"
+$outputPath = Join-Path $PSScriptRoot "architecture_overview.png"
 $bmp.Save($outputPath, [System.Drawing.Imaging.ImageFormat]::Png)
 Write-Output "Successfully generated: $outputPath"
 

@@ -1,6 +1,6 @@
 @echo off
 rem ================================================================
-rem  Start Jellyfin -> JRiver Bridge Tray App (silent, no console)
+rem  Start JCastBridge Tray App (silent, no console)
 rem ================================================================
 pushd "%~dp0"
 if exist "%~dp0start_tray_silent.vbs" (

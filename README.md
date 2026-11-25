@@ -402,7 +402,7 @@ When a compatible third-party app casts to "JRiver Media Center", the bridge rec
 ## Component Directory Structure
 
 ```
-jellyfin-jriver-bridge/
+jellyfin-jcast-bridge/
 ├── architecture_overview.png      # End-to-end system architecture & protocol flow diagram
 ├── config.example.yaml            # Template configuration (copy to config.yaml)
 ├── config.yaml                    # Local application settings (ignored by git)
